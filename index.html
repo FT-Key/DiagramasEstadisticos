@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagramas estadísticos</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <h2>Generador de Gráfico Torta</h2>
+
+  <div id="formulario">
+    <input type="text" id="nombre" placeholder="Nombre del dato" />
+    <input type="number" id="valor" placeholder="Valor" min="1" />
+    <button onclick="agregarDato()">Agregar Dato</button>
+  </div>
+
+  <canvas id="torta" width="400" height="400"></canvas>
+  <div id="leyenda" class="leyenda-container"></div>
+
+  <script src="./script.js"></script>
+</body>
+
+</html>

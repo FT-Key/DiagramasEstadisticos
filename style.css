@@ -1,0 +1,48 @@
+body {
+  font-family: sans-serif;
+  padding: 20px;
+  background: #f5f5f5;
+}
+
+#formulario {
+  margin-bottom: 20px;
+}
+
+input {
+  margin: 5px;
+  padding: 5px;
+}
+
+button {
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+canvas {
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.leyenda-container {
+  margin-top: 20px;
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: sans-serif;
+}
+
+.leyenda-item {
+  display: flex;
+  align-items: center;
+}
+
+.leyenda-color {
+  width: 14px;
+  height: 14px;
+  margin-right: 8px;
+  border: 1px solid #333;
+  border-radius: 3px;
+}
