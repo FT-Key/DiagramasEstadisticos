@@ -1,5 +1,6 @@
 const datos = [];
 const colores = [];
+let contadorAutomatico = 1;
 
 function agregarDato() {
   const nombre = document.getElementById('nombre').value.trim();
@@ -68,6 +69,8 @@ const paletaColores = [
 ];
 
 let colorIndex = 0;
+const canvas = document.getElementById('torta');
+const ctx = canvas.getContext('2d');
 
 function generarColor() {
   const color = paletaColores[colorIndex % paletaColores.length];
@@ -76,8 +79,6 @@ function generarColor() {
 }
 
 function dibujarTorta(sinUltimo = false) {
-  const canvas = document.getElementById('torta');
-  const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   const total = datos.reduce((acc, d) => acc + d.valor, 0);
@@ -157,63 +158,84 @@ function dibujarTorta(sinUltimo = false) {
   });
 }
 
-function animarSector(ctx, color, anguloInicial, anguloFinal, duration = 500) {
+function animarSector(ctx, color, _, __, duration = 500) {
   const centerX = 200;
   const centerY = 200;
   const radius = 150;
   const start = performance.now();
 
-  // Comenzamos con el valor inicial y el valor final que se anima
-  let anguloActualFinal = anguloFinal;
-  let anguloActualInicial = anguloInicial;
+  const totalFinal = datos.reduce((acc, d) => acc + d.valor, 0);
+  const valoresFinales = datos.map(d => d.valor);
+  const coloresFinales = [...colores];
+
+  // Mover el último dato al inicio para que se dibuje primero
+  const valoresReordenados = [valoresFinales[valoresFinales.length - 1], ...valoresFinales.slice(0, -1)];
+  const coloresReordenados = [coloresFinales[coloresFinales.length - 1], ...coloresFinales.slice(0, -1)];
+
+  // En el estado inicial, el nuevo dato es 0
+  const valoresIniciales = [...valoresReordenados];
+  valoresIniciales[0] = 0;
 
   function animate(time) {
     const elapsed = time - start;
     const progress = Math.min(elapsed / duration, 1);
 
-    // Calculamos el ángulo real que se va a mostrar
-    const anguloNuevo = anguloActualInicial + (anguloActualFinal - anguloActualInicial) * progress;
-    let anguloPrevio = anguloActualInicial;
-
-    ctx.clearRect(0, 0, 400, 400); // Limpiar canvas
-
-    // Dibujar todos los sectores existentes (sin el nuevo)
-    datos.forEach((dato, i) => {
-      if (i === datos.length - 1) return; // Omitir el último, que está en animación
-
-      const porcentaje = dato.valor / datos.reduce((acc, d) => acc + d.valor, 0);
-      const angulo = porcentaje * 2 * Math.PI;
-      anguloPrevio += angulo;
-
-      // Dibujar el sector existente
-      ctx.beginPath();
-      ctx.moveTo(centerX, centerY);
-      ctx.arc(centerX, centerY, radius, anguloActualInicial, anguloPrevio);
-      ctx.fillStyle = colores[i];
-      ctx.fill();
-      ctx.closePath();
+    // Interpolar valores
+    const valoresInterpolados = valoresIniciales.map((v0, i) => {
+      const v1 = valoresReordenados[i];
+      return v0 + (v1 - v0) * progress;
     });
 
-    // Dibujar el nuevo sector en expansión
-    ctx.beginPath();
-    ctx.moveTo(centerX, centerY);
-    ctx.arc(centerX, centerY, radius, anguloActualInicial, anguloNuevo);
-    ctx.fillStyle = color;
-    ctx.fill();
-    ctx.closePath();
+    const totalInterpolado = valoresInterpolados.reduce((acc, val) => acc + val, 0);
 
-    // Si no se ha terminado la animación, continuar
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+    let anguloInicio = 0;
+    valoresInterpolados.forEach((valor, i) => {
+      const porcentaje = valor / totalInterpolado;
+      const angulo = porcentaje * 2 * Math.PI;
+
+      const anguloFin = anguloInicio + angulo;
+
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.arc(centerX, centerY, radius, anguloInicio, anguloFin, false); // sentido horario
+      ctx.closePath();
+      ctx.fillStyle = coloresReordenados[i];
+      ctx.fill();
+
+      anguloInicio = anguloFin;
+    });
+
     if (progress < 1) {
       requestAnimationFrame(animate);
     } else {
-      // Después de la animación, redibujamos toda la torta
-      dibujarTorta(); // Finalizar con el gráfico completo
+      dibujarTorta(); // Dibujo final con orden correcto
     }
   }
 
-  requestAnimationFrame(animate); // Iniciar la animación
+  requestAnimationFrame(animate);
 }
 
+function agregarDatoAutomatico() {
+  const nombre = contadorAutomatico.toString();
+  const valor = 1000;
+
+  datos.push({ nombre, valor });
+  colores.push(generarColor());
+
+  dibujarTorta(true); // Dibuja la torta sin el último
+  const total = datos.reduce((acc, d) => acc + d.valor, 0);
+  const porcentaje = datos[datos.length - 1].valor / total;
+  const angulo = porcentaje * 2 * Math.PI;
+  const anguloInicial = datos
+    .slice(0, -1)
+    .reduce((acc, d) => acc + (d.valor / total) * 2 * Math.PI, 0);
+
+  animarSector(ctx, colores[colores.length - 1], anguloInicial, anguloInicial + angulo);
+
+  contadorAutomatico++;
+}
 
 // Dibujo inicial del gráfico vacío
 window.onload = () => dibujarTorta();
